@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse-ui
+  namespace: ui-tools
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse-ui
+  template:
+    metadata:
+      labels:
+        app: clickhouse-ui
+    spec:
+      containers:
+        - name: clickhouse-ui
+          image: spoonest/clickhouse-tabix-web-client:latest
+          ports:
+            - containerPort: 80

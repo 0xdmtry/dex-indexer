@@ -1,0 +1,55 @@
+.PHONY: install-ui-tools uninstall-ui-tools install-pgadmin install-kafka-ui install-redis-commander install-clickhouse-ui
+
+install-ui-tools: install-pgadmin install-kafka-ui install-redis-commander install-clickhouse-ui
+	@echo "All UI tools installed."
+
+uninstall-ui-tools: uninstall-clickhouse-ui uninstall-redis-commander uninstall-kafka-ui uninstall-pgadmin
+	@echo "All UI tools uninstalled."
+
+install-pgadmin:
+	@echo "Installing pgAdmin..."
+	@kubectl apply -f 401-pgadmin-deployment.yaml
+	@kubectl apply -f 402-pgadmin-service.yaml
+	@kubectl wait --for=condition=available deployment/pgadmin -n ui-tools --timeout=120s
+	@echo "pgAdmin installed. Access at localhost:30082"
+
+uninstall-pgadmin:
+	@kubectl delete -f 402-pgadmin-service.yaml --ignore-not-found
+	@kubectl delete -f 401-pgadmin-deployment.yaml --ignore-not-found
+	@echo "pgAdmin uninstalled."
+
+install-kafka-ui:
+	@echo "Installing Kafka UI..."
+	@kubectl apply -f 403-kafka-ui-deployment.yaml
+	@kubectl apply -f 404-kafka-ui-service.yaml
+	@kubectl wait --for=condition=available deployment/kafka-ui -n ui-tools --timeout=120s
+	@echo "Kafka UI installed. Access at localhost:30080"
+
+uninstall-kafka-ui:
+	@kubectl delete -f 404-kafka-ui-service.yaml --ignore-not-found
+	@kubectl delete -f 403-kafka-ui-deployment.yaml --ignore-not-found
+	@echo "Kafka UI uninstalled."
+
+install-redis-commander:
+	@echo "Installing Redis Commander..."
+	@kubectl apply -f 405-redis-commander-deployment.yaml
+	@kubectl apply -f 406-redis-commander-service.yaml
+	@kubectl wait --for=condition=available deployment/redis-commander -n ui-tools --timeout=120s
+	@echo "Redis Commander installed. Access at localhost:30081"
+
+uninstall-redis-commander:
+	@kubectl delete -f 406-redis-commander-service.yaml --ignore-not-found
+	@kubectl delete -f 405-redis-commander-deployment.yaml --ignore-not-found
+	@echo "Redis Commander uninstalled."
+
+install-clickhouse-ui:
+	@echo "Installing ClickHouse UI..."
+	@kubectl apply -f 407-clickhouse-ui-deployment.yaml
+	@kubectl apply -f 408-clickhouse-ui-service.yaml
+	@kubectl wait --for=condition=available deployment/clickhouse-ui -n ui-tools --timeout=120s
+	@echo "ClickHouse UI installed. Access at localhost:30083"
+
+uninstall-clickhouse-ui:
+	@kubectl delete -f 408-clickhouse-ui-service.yaml --ignore-not-found
+	@kubectl delete -f 407-clickhouse-ui-deployment.yaml --ignore-not-found
+	@echo "ClickHouse UI uninstalled."

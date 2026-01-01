@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-data-ch
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-data-ch
+  template:
+    metadata:
+      labels:
+        app: pump-data-ch
+    spec:
+      containers:
+        - name: pump-data-ch
+          image: pump-data-ch:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - configMapRef:
+                name: pump-data-ch-config

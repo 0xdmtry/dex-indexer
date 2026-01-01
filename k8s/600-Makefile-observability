@@ -1,0 +1,33 @@
+.PHONY: install-observability uninstall-observability install-prometheus install-grafana
+
+install-observability: install-prometheus install-grafana
+	@echo "All observability tools installed."
+
+uninstall-observability: uninstall-grafana uninstall-prometheus
+	@echo "All observability tools uninstalled."
+
+install-prometheus:
+	@echo "Installing Prometheus..."
+	@kubectl apply -f 601-prometheus-configmap.yaml
+	@kubectl apply -f 602-prometheus-deployment.yaml
+	@kubectl apply -f 603-prometheus-service.yaml
+	@kubectl wait --for=condition=available deployment/prometheus -n observability --timeout=120s
+	@echo "Prometheus installed. Access at localhost:30090"
+
+uninstall-prometheus:
+	@kubectl delete -f 603-prometheus-service.yaml --ignore-not-found
+	@kubectl delete -f 602-prometheus-deployment.yaml --ignore-not-found
+	@kubectl delete -f 601-prometheus-configmap.yaml --ignore-not-found
+	@echo "Prometheus uninstalled."
+
+install-grafana:
+	@echo "Installing Grafana..."
+	@kubectl apply -f 604-grafana-deployment.yaml
+	@kubectl apply -f 605-grafana-service.yaml
+	@kubectl wait --for=condition=available deployment/grafana -n observability --timeout=120s
+	@echo "Grafana installed. Access at localhost:30300"
+
+uninstall-grafana:
+	@kubectl delete -f 605-grafana-service.yaml --ignore-not-found
+	@kubectl delete -f 604-grafana-deployment.yaml --ignore-not-found
+	@echo "Grafana uninstalled."

@@ -1,0 +1,92 @@
+.PHONY: install-infrastructure uninstall-infrastructure install-postgres install-clickhouse install-redis install-kafka
+
+install-infrastructure: install-postgres install-clickhouse install-redis install-kafka
+	@echo "All infrastructure installed."
+
+uninstall-infrastructure: uninstall-kafka uninstall-redis uninstall-clickhouse uninstall-postgres
+	@echo "All infrastructure uninstalled."
+
+install-postgres:
+	@echo "Installing PostgreSQL..."
+	@kubectl apply -f 301-postgres-secret.yaml
+	@kubectl apply -f 302-postgres-cluster.yaml
+	@kubectl apply -f 303-postgres-service.yaml
+	@echo "Waiting for PostgreSQL cluster..."
+	@kubectl wait --for=condition=ready pod/postgres-cluster-1 -n infrastructure --timeout=300s
+	@echo "PostgreSQL installed."
+
+uninstall-postgres:
+	@kubectl delete -f 303-postgres-service.yaml --ignore-not-found
+	@kubectl delete -f 302-postgres-cluster.yaml --ignore-not-found
+	@kubectl delete -f 301-postgres-secret.yaml --ignore-not-found
+	@echo "PostgreSQL uninstalled."
+
+install-clickhouse:
+	@echo "Installing MinIO..."
+	@kubectl apply -f 304-clickhouse-minio.yaml
+	@kubectl wait --for=condition=available deployment/minio-deployment -n minio --timeout=120s
+	@echo "Installing ClickHouse..."
+	@kubectl apply -f 305-clickhouse-schema-configmap.yaml
+	@kubectl apply -f 306-clickhouse-cluster.yaml
+	@echo "Waiting for ClickHouse cluster..."
+	@start_time=$$(date +%s); \
+	while true; do \
+		status=$$(kubectl get chi clickhouse-cluster -n infrastructure -o jsonpath='{.status.status}' 2>/dev/null || echo "Pending"); \
+		if [ "$$status" = "Completed" ]; then \
+			echo "Status: Completed"; \
+			break; \
+		fi; \
+		echo "Status: $$status (retrying...)"; \
+		current_time=$$(date +%s); \
+		elapsed_time=$$(($$current_time - $$start_time)); \
+		if [ $$elapsed_time -gt 600 ]; then \
+			echo "Error: Timeout waiting for cluster."; \
+			exit 1; \
+		fi; \
+		sleep 15; \
+	done
+	@kubectl apply -f 307-clickhouse-service.yaml
+	@kubectl apply -f 308-clickhouse-nodeport.yaml
+	@kubectl delete job clickhouse-schema-bootstrap -n infrastructure --ignore-not-found
+	@kubectl apply -f 309-clickhouse-bootstrap-job.yaml
+	@kubectl wait --for=condition=complete job/clickhouse-schema-bootstrap -n infrastructure --timeout=180s
+	@echo "ClickHouse installed."
+
+uninstall-clickhouse:
+	@kubectl delete -f 309-clickhouse-bootstrap-job.yaml --ignore-not-found
+	@kubectl delete -f 308-clickhouse-nodeport.yaml --ignore-not-found
+	@kubectl delete -f 307-clickhouse-service.yaml --ignore-not-found
+	@kubectl delete -f 306-clickhouse-cluster.yaml --ignore-not-found
+	@kubectl delete -f 305-clickhouse-schema-configmap.yaml --ignore-not-found
+	@kubectl delete -f 304-clickhouse-minio.yaml --ignore-not-found
+	@echo "ClickHouse uninstalled."
+
+install-redis:
+	@echo "Installing Redis..."
+	@kubectl apply -f 310-redis-statefulset.yaml
+	@kubectl apply -f 311-redis-service.yaml
+	@kubectl wait --for=condition=ready pod/redis-0 -n infrastructure --timeout=120s
+	@echo "Redis installed."
+
+uninstall-redis:
+	@kubectl delete -f 311-redis-service.yaml --ignore-not-found
+	@kubectl delete -f 310-redis-statefulset.yaml --ignore-not-found
+	@echo "Redis uninstalled."
+
+install-kafka:
+	@echo "Installing Kafka cluster..."
+	@kubectl apply -f 312-kafka-cluster.yaml
+	@echo "Waiting for Kafka cluster to be ready..."
+	@until kubectl get kafka kafka-cluster -n kafka -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}' 2>/dev/null | grep -q "True"; do \
+		echo "Waiting for Kafka..."; \
+		sleep 10; \
+	done
+	@kubectl apply -f 313-kafka-topics.yaml
+	@kubectl apply -f 314-kafka-service.yaml
+	@echo "Kafka installed."
+
+uninstall-kafka:
+	@kubectl delete -f 314-kafka-service.yaml --ignore-not-found
+	@kubectl delete -f 313-kafka-topics.yaml --ignore-not-found
+	@kubectl delete -f 312-kafka-cluster.yaml --ignore-not-found
+	@echo "Kafka uninstalled."

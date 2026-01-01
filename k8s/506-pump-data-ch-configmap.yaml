@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pump-data-ch-config
+  namespace: microservices
+data:
+  CLICKHOUSE_URL: "http://clickhouse.infrastructure:8123"
+  CLICKHOUSE_USER: "clickhouse_user"
+  CLICKHOUSE_PASSWORD: "clickhouse_password"
+  CLICKHOUSE_DATABASE: "events_db"
+  REDIS_URL: "redis://redis.infrastructure:6379"
+  KAFKA_BROKERS: "kafka-cluster-kafka-bootstrap.kafka:9092"

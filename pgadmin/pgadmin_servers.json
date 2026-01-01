@@ -1,0 +1,15 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "tokens_db",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "tokens_db",
+      "Username": "streamer_db_user",
+      "Password": "streamer_db_password",
+      "SSLMode": "prefer",
+      "SavePassword": true
+    }
+  }
+}

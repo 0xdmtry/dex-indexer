@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-backfill
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-backfill
+  template:
+    metadata:
+      labels:
+        app: pump-backfill
+    spec:
+      containers:
+        - name: pump-backfill
+          image: pump-backfill:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8006

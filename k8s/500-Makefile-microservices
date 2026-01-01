@@ -1,0 +1,49 @@
+.PHONY: install-microservices uninstall-microservices build-images
+
+build-images:
+	@echo "Building Docker images..."
+	@docker build -t pump-api:dev -f ../pub_api/PumpApi.dev.dockerfile ../pub_api
+	@docker build -t pump-data-pgsql:dev -f ../data_pgsql/PumpDataPgsql.dev.dockerfile ../data_pgsql
+	@docker build -t pump-data-ch:dev -f ../data_ch/PumpDataCh.dev.dockerfile ../data_ch
+	@docker build -t pump-geyser-tx-streamer:dev -f ../pumpfun_geyser_tx_streamer/PumpGeyserTxStreamer.dev.dockerfile ../pumpfun_geyser_tx_streamer
+	@docker build -t pump-geyser-account-subscriber:dev -f ../pumpfun_geyser_account_subscriber/PumpGeyserAccountSubscriber.dev.dockerfile ../pumpfun_geyser_account_subscriber
+	@docker build -t pump-ws-streamer:dev -f ../pumpfun_ws_streamer/PumpWsStreamer.dev.dockerfile ../pumpfun_ws_streamer
+	@docker build -t pump-backfill:dev -f ../backfill/PumpBackfill.dev.dockerfile ../backfill
+	@echo "All images built."
+
+install-microservices:
+	@echo "Installing microservices..."
+	@kubectl apply -f 501-pump-api-configmap.yaml
+	@kubectl apply -f 502-pump-api-deployment.yaml
+	@kubectl apply -f 503-pump-api-service.yaml
+	@kubectl apply -f 504-pump-data-pgsql-configmap.yaml
+	@kubectl apply -f 505-pump-data-pgsql-deployment.yaml
+	@kubectl apply -f 506-pump-data-ch-configmap.yaml
+	@kubectl apply -f 507-pump-data-ch-deployment.yaml
+	@kubectl apply -f 508-pump-geyser-tx-streamer-configmap.yaml
+	@kubectl apply -f 509-pump-geyser-tx-streamer-deployment.yaml
+	@kubectl apply -f 510-pump-geyser-account-subscriber-configmap.yaml
+	@kubectl apply -f 511-pump-geyser-account-subscriber-deployment.yaml
+	@kubectl apply -f 512-pump-ws-streamer-deployment.yaml
+	@kubectl apply -f 513-pump-ws-streamer-service.yaml
+	@kubectl apply -f 514-pump-backfill-deployment.yaml
+	@echo "Waiting for deployments..."
+	@kubectl wait --for=condition=available deployment --all -n microservices --timeout=300s
+	@echo "All microservices installed."
+
+uninstall-microservices:
+	@kubectl delete -f 514-pump-backfill-deployment.yaml --ignore-not-found
+	@kubectl delete -f 513-pump-ws-streamer-service.yaml --ignore-not-found
+	@kubectl delete -f 512-pump-ws-streamer-deployment.yaml --ignore-not-found
+	@kubectl delete -f 511-pump-geyser-account-subscriber-deployment.yaml --ignore-not-found
+	@kubectl delete -f 510-pump-geyser-account-subscriber-configmap.yaml --ignore-not-found
+	@kubectl delete -f 509-pump-geyser-tx-streamer-deployment.yaml --ignore-not-found
+	@kubectl delete -f 508-pump-geyser-tx-streamer-configmap.yaml --ignore-not-found
+	@kubectl delete -f 507-pump-data-ch-deployment.yaml --ignore-not-found
+	@kubectl delete -f 506-pump-data-ch-configmap.yaml --ignore-not-found
+	@kubectl delete -f 505-pump-data-pgsql-deployment.yaml --ignore-not-found
+	@kubectl delete -f 504-pump-data-pgsql-configmap.yaml --ignore-not-found
+	@kubectl delete -f 503-pump-api-service.yaml --ignore-not-found
+	@kubectl delete -f 502-pump-api-deployment.yaml --ignore-not-found
+	@kubectl delete -f 501-pump-api-configmap.yaml --ignore-not-found
+	@echo "All microservices uninstalled."

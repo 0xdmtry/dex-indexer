@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clickhouse-schema-bootstrap
+  namespace: infrastructure
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: bootstrap
+          image: curlimages/curl:8.10.1
+          command: ["/bin/sh", "-ceu"]
+          args:
+            - |
+              set -o pipefail
+              echo "Waiting for ClickHouse..."
+              for i in $(seq 1 120); do
+                if curl -fsS -o /dev/null -w "%{http_code}" "${CH_HOST}/ping" | grep -q 200; then
+                  echo "ClickHouse OK"
+                  break
+                fi
+                sleep 2
+              done
+              echo "Running schema..."
+              for f in $(ls -1 /schema/*.sql | sort); do
+                echo ">> $f"
+                curl -fsS \
+                  -u "${CH_USER}:${CH_PASS}" \
+                  -H 'Content-Type: text/plain' \
+                  --data-binary "@$f" \
+                  "${CH_HOST}/" || {
+                    echo "Failed on $f"
+                    exit 1
+                  }
+              done
+              echo "All schema applied."
+          env:
+            - name: CH_HOST
+              value: "http://clickhouse.infrastructure.svc.cluster.local:8123"
+            - name: CH_USER
+              value: "clickhouse_user"
+            - name: CH_PASS
+              value: "clickhouse_password"
+          volumeMounts:
+            - name: schema
+              mountPath: /schema
+      volumes:
+        - name: schema
+          configMap:
+            name: clickhouse-schema

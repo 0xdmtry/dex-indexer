@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-ws-streamer
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-ws-streamer
+  template:
+    metadata:
+      labels:
+        app: pump-ws-streamer
+    spec:
+      containers:
+        - name: pump-ws-streamer
+          image: pump-ws-streamer:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8005

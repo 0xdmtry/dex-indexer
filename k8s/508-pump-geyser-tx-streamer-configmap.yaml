@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pump-geyser-tx-streamer-config
+  namespace: microservices
+data:
+  KAFKA_BROKERS: "kafka-cluster-kafka-bootstrap.kafka:9092"

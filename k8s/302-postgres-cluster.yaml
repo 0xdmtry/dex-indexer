@@ -1,0 +1,16 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres-cluster
+  namespace: infrastructure
+spec:
+  instances: 1
+  storage:
+    size: 5Gi
+    storageClass: hostpath
+  bootstrap:
+    initdb:
+      database: tokens_db
+      owner: streamer_db_user
+      secret:
+        name: postgres-credentials

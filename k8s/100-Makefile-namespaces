@@ -1,0 +1,16 @@
+.PHONY: install-namespaces uninstall-namespaces
+
+install-namespaces:
+	@echo "Creating namespaces..."
+	@kubectl apply -f 101-namespace-infrastructure.yaml
+	@kubectl apply -f 102-namespace-microservices.yaml
+	@kubectl apply -f 103-namespace-observability.yaml
+	@kubectl apply -f 104-namespace-ui-tools.yaml
+	@echo "All namespaces created."
+
+uninstall-namespaces:
+	@kubectl delete -f 104-namespace-ui-tools.yaml --ignore-not-found
+	@kubectl delete -f 103-namespace-observability.yaml --ignore-not-found
+	@kubectl delete -f 102-namespace-microservices.yaml --ignore-not-found
+	@kubectl delete -f 101-namespace-infrastructure.yaml --ignore-not-found
+	@echo "All namespaces deleted."

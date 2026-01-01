@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-data-pgsql
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-data-pgsql
+  template:
+    metadata:
+      labels:
+        app: pump-data-pgsql
+    spec:
+      containers:
+        - name: pump-data-pgsql
+          image: pump-data-pgsql:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8001
+          envFrom:
+            - configMapRef:
+                name: pump-data-pgsql-config

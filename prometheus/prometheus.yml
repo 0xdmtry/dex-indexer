@@ -1,0 +1,28 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'pub_api'
+    static_configs:
+      - targets: [ 'host.docker.internal:8000' ]
+  - job_name: 'data_pgsql'
+    static_configs:
+      - targets: [ 'host.docker.internal:8001' ]
+  - job_name: 'data_ch'
+    static_configs:
+      - targets: [ 'host.docker.internal:8002' ]
+  - job_name: 'pumpfun_geyser_tx_streamer'
+    static_configs:
+      - targets: [ 'host.docker.internal:8003' ]
+  - job_name: 'pumpfun_geyser_account_subscriber'
+    static_configs:
+      - targets: [ 'host.docker.internal:8004' ]
+  - job_name: 'pumpfun_ws_streamer'
+    static_configs:
+      - targets: [ 'host.docker.internal:8005' ]
+  - job_name: 'backfill'
+    static_configs:
+      - targets: [ 'host.docker.internal:8006' ]
+  - job_name: 'tx_raw'
+    static_configs:
+      - targets: [ 'host.docker.internal:8007' ]

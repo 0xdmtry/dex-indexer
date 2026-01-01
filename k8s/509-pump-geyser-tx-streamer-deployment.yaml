@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-geyser-tx-streamer
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-geyser-tx-streamer
+  template:
+    metadata:
+      labels:
+        app: pump-geyser-tx-streamer
+    spec:
+      containers:
+        - name: pump-geyser-tx-streamer
+          image: pump-geyser-tx-streamer:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8003
+          envFrom:
+            - configMapRef:
+                name: pump-geyser-tx-streamer-config

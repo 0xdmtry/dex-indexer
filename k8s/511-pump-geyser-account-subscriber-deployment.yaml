@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pump-geyser-account-subscriber
+  namespace: microservices
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pump-geyser-account-subscriber
+  template:
+    metadata:
+      labels:
+        app: pump-geyser-account-subscriber
+    spec:
+      containers:
+        - name: pump-geyser-account-subscriber
+          image: pump-geyser-account-subscriber:dev
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8004
+          envFrom:
+            - configMapRef:
+                name: pump-geyser-account-subscriber-config

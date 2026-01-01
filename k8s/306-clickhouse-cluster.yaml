@@ -1,0 +1,54 @@
+apiVersion: "clickhouse.altinity.com/v1"
+kind: "ClickHouseInstallation"
+metadata:
+  name: "clickhouse-cluster"
+  namespace: infrastructure
+spec:
+  configuration:
+    clusters:
+      - name: "default"
+        layout:
+          shardsCount: 1
+          replicasCount: 1
+
+    users:
+      clickhouse_user/password: "clickhouse_password"
+      clickhouse_user/networks/ip: "0.0.0.0/0"
+      clickhouse_user/access_management: 1
+      clickhouse_user/profile: "default"
+      clickhouse_user/quota: "default"
+
+    settings:
+      s3:
+        use_virtual_hosted_style: false
+      storage_configuration:
+        disks:
+          s3_storage:
+            type: s3
+            endpoint: "http://minio-service.minio:9000/clickhouse/"
+            access_key_id: "minioadmin"
+            secret_access_key: "minioadmin"
+        policies:
+          default:
+            volumes:
+              default:
+                disk: "default"
+              s3:
+                disk: "s3_storage"
+
+    files:
+      schema-init-scripts:
+        mountPath: "/docker-entrypoint-initdb.d/"
+        configMap:
+          name: "clickhouse-schema"
+
+  templates:
+    volumeClaimTemplates:
+      - name: default
+        spec:
+          accessModes:
+            - "ReadWriteOnce"
+          storageClassName: "hostpath"
+          resources:
+            requests:
+              storage: "5Gi"

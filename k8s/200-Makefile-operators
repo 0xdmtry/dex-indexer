@@ -1,0 +1,48 @@
+.PHONY: install-operators uninstall-operators install-clickhouse-operator install-cnpg-operator install-strimzi-operator install-redis-operator
+
+install-operators: install-clickhouse-operator install-cnpg-operator install-strimzi-operator install-redis-operator
+	@echo "All operators installed."
+
+uninstall-operators: uninstall-redis-operator uninstall-strimzi-operator uninstall-cnpg-operator uninstall-clickhouse-operator
+	@echo "All operators uninstalled."
+
+install-clickhouse-operator:
+	@echo "Installing Altinity ClickHouse operator..."
+	@kubectl apply -f https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/operator/clickhouse-operator-install-bundle.yaml
+	@kubectl wait --for=condition=established crd/clickhouseinstallations.clickhouse.altinity.com --timeout=60s
+	@until kubectl get deployment clickhouse-operator -n kube-system > /dev/null 2>&1; do sleep 2; done
+	@kubectl wait --for=condition=available deployment/clickhouse-operator -n kube-system --timeout=120s
+	@echo "ClickHouse operator installed."
+
+uninstall-clickhouse-operator:
+	@kubectl delete -f https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/operator/clickhouse-operator-install-bundle.yaml --ignore-not-found
+	@echo "ClickHouse operator uninstalled."
+
+install-cnpg-operator:
+	@echo "Installing CloudNativePG operator..."
+	@kubectl apply --server-side --force-conflicts -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.24/releases/cnpg-1.24.1.yaml
+	@kubectl wait --for=condition=available deployment/cnpg-controller-manager -n cnpg-system --timeout=120s
+	@echo "CloudNativePG operator installed."
+
+uninstall-cnpg-operator:
+	@kubectl delete -f https://raw.githubusercontent.com/cloudnative-pg/cloudnative-pg/release-1.24/releases/cnpg-1.24.1.yaml --ignore-not-found
+	@echo "CloudNativePG operator uninstalled."
+
+install-strimzi-operator:
+	@echo "Installing Strimzi Kafka operator..."
+	@kubectl create namespace kafka --dry-run=client -o yaml | kubectl apply -f -
+	@kubectl apply -f https://strimzi.io/install/latest?namespace=kafka -n kafka
+	@kubectl wait --for=condition=available deployment/strimzi-cluster-operator -n kafka --timeout=120s
+	@echo "Strimzi operator installed."
+
+uninstall-strimzi-operator:
+	@kubectl delete -f https://strimzi.io/install/latest?namespace=kafka -n kafka --ignore-not-found
+	@kubectl delete namespace kafka --ignore-not-found
+	@echo "Strimzi operator uninstalled."
+
+install-redis-operator:
+	@echo "Skipping Redis operator (using standalone Redis instead)..."
+	@echo "Redis operator not needed for dev/staging."
+
+uninstall-redis-operator:
+	@echo "Skipping Redis operator uninstall..."
